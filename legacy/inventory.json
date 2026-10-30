@@ -1,0 +1,50 @@
+{
+  "schema": "secure-kernel-lab.legacy-inventory.v1",
+  "files": [
+    {
+      "path": "legacy/h3probe-migration/h3_memory_differential.py",
+      "bytes": 31182,
+      "sha256": "2336BC6BA9ED07AF16392A2D8F6B8B277C309172B30D5500FC3832862B7308D0"
+    },
+    {
+      "path": "legacy/h3probe-migration/h3_migration_differential.py",
+      "bytes": 11093,
+      "sha256": "94D93F791BA7FA1885A32E628527E63776B15454709EC7659A74049580274C06"
+    },
+    {
+      "path": "legacy/h3probe-migration/hvmm.py",
+      "bytes": 15160,
+      "sha256": "3E1921CE1C25ACA274A0827B9DFAC278F49D222DD908658C78DE2DBBB337BCBA"
+    },
+    {
+      "path": "legacy/h3probe-migration/hvmm_gpa.py",
+      "bytes": 6581,
+      "sha256": "2AE26A86B87E61CE7E261F80780D4AC0DFB621D53376847248BA127AF50E1D3A"
+    },
+    {
+      "path": "legacy/h3probe-migration/hvmm_gpa_server.py",
+      "bytes": 4391,
+      "sha256": "E2E9C112DCAE1D775E627359069ADAEF6BACBAFE5790500B99D8C3BFF2778CB5"
+    },
+    {
+      "path": "legacy/h3probe-migration/s5w_gpa_server_pinned_vtl.py",
+      "bytes": 21660,
+      "sha256": "BD15EC959216F7CEAD027FDBDDF8D6FC06FE16DE67C09C39ED931A6227F234B6"
+    },
+    {
+      "path": "legacy/h3probe-migration/test_h3_migration_differential.py",
+      "bytes": 11918,
+      "sha256": "318D87914A4B2A94EB535C7F76F87A39F7419A10D9406040EB598F5D8546AB64"
+    },
+    {
+      "path": "legacy/h3probe-migration/test_hvmm.py",
+      "bytes": 12213,
+      "sha256": "1331B8D503D6C65FA993365D02D091B76542A67F5E19A1DDCA56182F30246DE6"
+    },
+    {
+      "path": "legacy/h3probe-migration/test_live_decode_providers.py",
+      "bytes": 11997,
+      "sha256": "2ABE23F32B14D1E9B45554A3939FAD1C4E1AC05182107893F602C86FECDD2857"
+    }
+  ]
+}

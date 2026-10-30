@@ -1,0 +1,67 @@
+{
+  "schema": "windbg-mcp.sk-live-dispatcher-profile.v1",
+  "vmwp_image": "C:\\Windows\\System32\\vmwp.exe",
+  "vmwp_sha256": "AD1D4D5380F81DBD95CECDE55D5F1BC19FC1EBA60AE530141C8597562200909F",
+  "vmwp_size_of_image": 3735552,
+  "scratch_base": "0x0000020000000000",
+  "scratch_size": 4096,
+  "registration_tag": "0x4b344155544f5354",
+  "register_handler_rva": "0x000000000020ff50",
+  "unregister_handler_rva": "0x0000000000210fe0",
+  "callback_stub_rva": "0x0000000000048bd0",
+  "callback_resume_rva": "0x000000000002c85f",
+  "discovery": {
+    "entry": {
+      "rva": "0x000000000002c360",
+      "original": [64, 83, 86, 87, 65, 84, 65, 85]
+    },
+    "vid_image": "C:\\Windows\\System32\\vid.dll",
+    "vid_sha256": "9B538C07FA65C09D406956371EF3C68F4BCE4E1FA9F694E4CCB727409366FA26",
+    "vid_size_of_image": 253952
+  },
+  "secure_kernel_kd": {
+    "build": 26100,
+    "initial": {
+      "rva": "0x000000000000b12b",
+      "original": [15, 31, 68, 0, 0]
+    },
+    "debugger_data": {
+      "list_head_rva": "0x00000000001335c0",
+      "block_rva": "0x00000000001335e0",
+      "loaded_module_list_rva": "0x0000000000127770"
+    }
+  },
+  "event_held": {
+    "rva": "0x000000000002c7b4",
+    "original": [73, 139, 94, 8, 72, 139, 67, 120]
+  },
+  "callback_entry": {
+    "rva": "0x000000000002c83a",
+    "original": [76, 139, 147, 128, 0, 0, 0, 141]
+  },
+  "handle_return": {
+    "rva": "0x000000000002c261",
+    "original": [139, 248, 131, 123, 112, 0, 117, 158]
+  },
+  "native_return": {
+    "rva": "0x000000000002c238",
+    "original": [133, 192, 15, 132, 216, 0, 0, 0]
+  },
+  "deferred_cleanup": {
+    "rva": "0x0000000000019630",
+    "original": [72, 137, 76, 36, 8, 83, 72, 131]
+  },
+  "layout": {
+    "returned_context": 0,
+    "handler_descriptor": 256,
+    "callback_descriptor": 512,
+    "callback_mirror": 48,
+    "event_context": 8,
+    "event_vp": 16,
+    "exchange_advance": 328,
+    "callback_pointer": 128,
+    "callback_flags": 136,
+    "register_stack_handler": 40,
+    "register_stack_context": 48
+  }
+}

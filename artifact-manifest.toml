@@ -1,0 +1,5 @@
+[artifacts.securekernel_26100_9457]
+path = 'securekernel-26100.9457.exe'
+sha256 = 'A9CDE82E39794FB2910BD53A7DDA3DF750C443222F898C49092D5E51F8B2095E'
+required_by = ['k3', 'core.capture']
+description = 'Pinned Secure Kernel image from the current K3 guest; intentionally not tracked by Git.'

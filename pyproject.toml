@@ -1,0 +1,23 @@
+[project]
+name = "secure-kernel-lab"
+version = "0.1.0"
+description = "Console and CLI for the windbg-mcp Secure Kernel lab"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+sklab = "sklab.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.11.29,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+package = true
+
+[tool.uv.build-backend]
+module-name = "sklab"
+

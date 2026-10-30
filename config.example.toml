@@ -1,0 +1,51 @@
+[paths]
+# Relative paths resolve against this file's directory. These two assume windbg-mcp is checked
+# out beside this repository.
+windbg_mcp_repo = '..\windbg-mcp'
+windbg_mcp_exe = '..\windbg-mcp\target\debug\windbg-mcp.exe'
+windows_kit_root = 'C:\Program Files (x86)\Windows Kits\10'
+debugger_exe = 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\windbg.exe'
+classic_debugger_exe = 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\windbg.exe'
+# Name DbgX.Shell.exe inside the current Microsoft.WinDbg package (older packages used
+# WinDbgX.exe). Do not use the WindowsApps execution alias: it can exit while the UI remains open.
+# windbgx_exe = 'C:\Program Files\WindowsApps\Microsoft.WinDbg_<version>_x64__8wekyb3d8bbwe\DbgX.Shell.exe'
+# Local store containing securekernel.pdb for the configured guest build.
+# symbol_path = 'C:\symbols\securekernel-26100.9457'
+cdb_exe = 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe'
+artifacts_root = 'artifacts'
+runs_root = 'runs'
+state_root = '.state'
+
+[defaults]
+connect_timeout_ms = 120000
+idle_timeout_ms = 300000
+max_pause_ms = 600000
+arm_mode = 'redirect'
+steps = 8
+
+# h3probe is the one host driver: registers, guest-physical memory and the refusing hypercall all
+# go through it. Build and install it from drivers/h3probe/README.md, then pin the image the
+# service loads; `sklab doctor` prints its hash while it is unpinned.
+[drivers]
+h3probe_service = 'h3probe'
+# h3probe_sha256 = '64 HEX CHARACTERS'
+
+[targets.demo]
+vm_id = '00000000-0000-0000-0000-000000000000'
+vm_name = 'Disposable Secure Kernel demo VM'
+disposable = true
+profile = 'profiles\vmwp-dispatcher-profile-26100.9711.json'
+secure_kernel_image = 'artifacts\securekernel-26100.9457.exe'
+vp = 0
+# M8 qualification uses one VM VP and requires this empty for guarded INT3. Add VPs only for the
+# explicitly multi-provider live-control modules on a correspondingly configured target.
+additional_vps = []
+guest_spin_host = 'C:\encl\spin_host.exe'
+guest_enclave_image = 'C:\encl\spin_enclave.dll'
+guest_credential_file = 'credentials\demo.json'
+# expected_image_sha256 = '64 HEX CHARACTERS'
+# expected_vmwp_sha256 = '64 HEX CHARACTERS'
+# expected_vid_sha256 = '64 HEX CHARACTERS'
+# Immutable read-only base used by `sklab vm reset` and transition workflows.
+# parent_disk = 'D:\lab\positive-flat.vhdx'
+# work_disk_root = 'D:\lab\working-disks'

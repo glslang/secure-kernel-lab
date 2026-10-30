@@ -1,0 +1,29 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+dist/
+build/
+*.egg-info/
+
+# Machine-local authority and runtime state.
+config.local.toml
+credentials/
+.state/
+runs/
+*.jsonl
+*.log
+
+# Lab artifacts are verified from artifact-manifest.toml, not stored in Git.
+artifacts/
+*.exe
+*.dll
+*.sys
+*.pdb
+*.obj
+*.vhd*
+*.vmrs
+*.bin
+*.hive
+
