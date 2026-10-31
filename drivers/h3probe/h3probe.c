@@ -20,8 +20,14 @@
 #include <ntddk.h>
 #include <ntimage.h>   /* PE structures for the winhvr.sys export walk (S5q) */
 #include <aux_klib.h>  /* AuxKlibQueryModuleInformation, to find it (S5q)    */
+#include <wdmsec.h>    /* IoCreateDeviceSecure, SDDL_DEVOBJ_SYS_ALL_ADM_ALL  */
 
 #define H3_DEVICE_NAME   L"\\Device\\H3Probe"
+
+/* The class IoCreateDeviceSecure files the device under, so an administrator can override its
+   security in the registry. Invented for this driver; it names no real device class. */
+static const GUID H3_DEVICE_CLASS =
+    { 0xf0650770, 0x266f, 0x4d66, { 0x80, 0xdb, 0x56, 0x6a, 0x46, 0xff, 0xbc, 0xb9 } };
 #define H3_SYMLINK_NAME  L"\\DosDevices\\H3Probe"
 #define IOCTL_H3_RUN \
     CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
@@ -3156,7 +3162,14 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT Driver, PUNICODE_STRING Registry)
     g_OutputPa = MmGetPhysicalAddress(g_OutputVa).QuadPart;
 
     RtlInitUnicodeString(&devName, H3_DEVICE_NAME);
-    st = IoCreateDevice(Driver, 0, &devName, FILE_DEVICE_UNKNOWN, 0, FALSE, &g_Device);
+    /* SYSTEM and Administrators only. Every control code is FILE_ANY_ACCESS, so any handle at all
+       can issue them, and IoCreateDevice's default descriptor gave Everyone read/write: measured
+       2026-10-31, a medium-integrity token with Administrators disabled opened the device and
+       reached H3Dispatch. FILE_DEVICE_SECURE_OPEN applies the descriptor to an open of a path
+       under the device too. Without it \\.\H3Probe\x skipped the check, which the same
+       measurement showed with the descriptor tightened at runtime. */
+    st = IoCreateDeviceSecure(Driver, 0, &devName, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN,
+                              FALSE, &SDDL_DEVOBJ_SYS_ALL_ADM_ALL, &H3_DEVICE_CLASS, &g_Device);
     if (!NT_SUCCESS(st)) { H3Unload(Driver); return st; }
 
     RtlInitUnicodeString(&linkName, H3_SYMLINK_NAME);

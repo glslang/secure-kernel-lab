@@ -22,9 +22,22 @@ memory probes and operation here; this copy is the source of truth for them. The
 that record what each earlier gate was built against stay in `exdi-rig`; they are history, not
 source.
 
-`build.cmd` is that repository's build script with three changes: it builds beside itself whatever
-the current directory, `VSROOT` and `KV` override the Build Tools root and WDK version, and an
-optional certificate thumbprint test-signs the result.
+`build.cmd` is that repository's build script with four changes: it builds beside itself whatever
+the current directory, `VSROOT` and `KV` override the Build Tools root and WDK version, an optional
+certificate thumbprint test-signs the result, and it links `wdmsec.lib` for `IoCreateDeviceSecure`.
+
+## Who can open it
+
+Only SYSTEM and Administrators. Every control code is `FILE_ANY_ACCESS`, so the device's descriptor
+is the only check on who reaches them. The device is created with `SDDL_DEVOBJ_SYS_ALL_ADM_ALL` and
+`FILE_DEVICE_SECURE_OPEN`, so the descriptor also covers an open of a path under the device. Every
+legitimate caller is an elevated administrator already, as any debugger is.
+
+Before 2026-10-31 it was created with `IoCreateDevice` and no descriptor. Measured that day, the
+default descriptor granted Everyone read and write. A medium-integrity token with Administrators
+disabled, which is what an unelevated process runs with, opened `\\.\H3Probe` and reached the
+dispatch routine. Tightening the descriptor at runtime refused that token at `\\.\H3Probe` but not
+at `\\.\H3Probe\x`. The rebuilt image refuses it at both and still admits an elevated caller.
 
 ## What the lab calls
 

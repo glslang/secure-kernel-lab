@@ -24,7 +24,7 @@ echo MSVC: %MSVCVER%  WDK: %KV%
 if errorlevel 1 goto failed
 %LD% /nologo /DRIVER /SUBSYSTEM:NATIVE /ENTRY:DriverEntry /NODEFAULTLIB /DEBUG ^
   /LIBPATH:"%KITS%\Lib\%KV%\km\x64" /LIBPATH:"%MSVC%\lib\x64" ^
-  /OUT:h3probe.sys h3probe.obj ntoskrnl.lib hal.lib BufferOverflowFastFailK.lib aux_klib.lib
+  /OUT:h3probe.sys h3probe.obj ntoskrnl.lib hal.lib BufferOverflowFastFailK.lib aux_klib.lib wdmsec.lib
 if errorlevel 1 goto failed
 if "%~1"=="" goto built
 %SIGNTOOL% sign /sha1 %~1 /fd sha256 h3probe.sys
