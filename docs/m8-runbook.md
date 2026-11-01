@@ -15,7 +15,7 @@ The reproducible stack has one host driver, built from this repository:
 
 | Component | Responsibility | Source in this repository |
 |---|---|---|
-| `h3probe.sys` | Child discovery, VTL0/VTL1 registers, debug-register control, active-VTL and boot-scoped identity, guest-physical reads and bounded writes through vmwp's VID partition handle, and the refusing `HvCallReadGpa` oracle | Yes, under `drivers/h3probe/` |
+| `h3probe.sys` | Child discovery, VTL0/VTL1 registers, debug-register control, active-VTL and boot-scoped identity, guest-physical reads and bounded writes through vmwp's VID partition handle, and the refusing `HvCallReadGpa` oracle | Yes, under `windbg-mcp/drivers/h3probe/` |
 
 Nothing loads `hvlib.dll` and no LiveCloudKd component is installed. Sklab hands the identity-bound
 VID handle, vmwp's PID and the partition ID to h3probe, which reads inside vmwp after checking all

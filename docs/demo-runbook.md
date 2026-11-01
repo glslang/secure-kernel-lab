@@ -18,7 +18,7 @@ Start the console with `uv run sklab --target k3`. Use `modules` to establish th
 
 1. `use live.decode`, `check`, `run` to establish the pinned VTL1 image without mutation.
 2. `use live.ambient`, `set steps 8`, `check`, `run` for the ambient stop/step/resume path.
-3. `use live.transition`, `check`, `run` for the VTL1 user transition and protected-stack evidence.
+3. `use live.decode`, `set mode hypercall`, `check`, `run` for the refusing negative control.
 4. `use kd.debugger`, `check`, `run`. Show the run's generic-tool results for symbols, modules, the
    natural breakpoint, registers, stack, disassembly, step, `g`, and asynchronous break-in.
 5. For an interactive client, `use kd.external`, choose `frontend=classic` or `windbgx`, and `run`.

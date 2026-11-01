@@ -23,9 +23,9 @@ max_pause_ms = 600000
 arm_mode = 'redirect'
 steps = 8
 
-# h3probe is the one host driver: registers, guest-physical memory and the refusing hypercall all
-# go through it. Build and install it from drivers/h3probe/README.md, then pin the image the
-# service loads; `sklab doctor` prints its hash while it is unpinned.
+# h3probe is the one host driver. Build it from windbg-mcp/drivers/h3probe, install it as a
+# demand-start service, then pin the image the service loads. Sklab owns only service lifecycle;
+# windbg-mcp owns its provider roles and device ABI.
 [drivers]
 h3probe_service = 'h3probe'
 # h3probe_sha256 = '64 HEX CHARACTERS'

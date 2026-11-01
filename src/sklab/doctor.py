@@ -6,10 +6,9 @@ from pathlib import Path
 import subprocess
 from typing import Any
 
-from . import h3_memory
 from .artifacts import load_manifest, verify
 from .config import Config, Target
-from .drivers import open_device, status as driver_status
+from .drivers import status as driver_status
 from .util import sha256
 
 
@@ -56,24 +55,75 @@ def _vm(target: Target) -> tuple[bool, str | None, str]:
     return matches, state, f"{value.get('Name')} ({raw_state}) {value.get('VMId')}"
 
 
-def _memory_operation(required: bool) -> dict[str, Any]:
-    """Whether the loaded h3probe serves the memory operation sklab reads guest memory through."""
+def _provider(config: Config, target: Target | None, required: bool) -> dict[str, Any]:
+    """Probe the repository-owned provider without opening its device in sklab."""
+    if target is None:
+        return _check(
+            "h3probe built-in provider",
+            False,
+            "a configured target is required for the provider handshake",
+            required=required,
+        )
+    discovery = subprocess.run(
+        [
+            str(config.paths.windbg_mcp_exe),
+            "--sk-discover-identity",
+            "--profile",
+            str(target.profile),
+            "--vm-id",
+            target.vm_id,
+        ],
+        cwd=config.paths.windbg_mcp_repo,
+        text=True,
+        capture_output=True,
+        timeout=120,
+    )
+    if discovery.returncode:
+        return _check(
+            "h3probe built-in provider",
+            False,
+            discovery.stderr.strip() or discovery.stdout.strip(),
+            required=required,
+        )
     try:
-        device = h3_memory.Device()
-    except OSError as error:
-        return _check("h3 memory operation", False, str(error), required=required)
-    try:
-        ok, detail = h3_memory.capability(device)
-    finally:
-        device.close()
-    return _check("h3 memory operation", ok, detail, required=required)
+        identity = json.loads(discovery.stdout)
+        partition = str(identity["partition_id"])
+    except (KeyError, TypeError, ValueError) as error:
+        return _check(
+            "h3probe built-in provider",
+            False,
+            f"invalid discovery reply: {error}: {discovery.stdout!r}",
+            required=required,
+        )
+    probe = subprocess.run(
+        [
+            str(config.paths.windbg_mcp_exe),
+            "--sk-control-probe",
+            "--transport",
+            "builtin:h3probe",
+            "--vm-id",
+            target.vm_id,
+            "--partition-id",
+            partition,
+            "--vp",
+            str(target.vp),
+        ],
+        cwd=config.paths.windbg_mcp_repo,
+        text=True,
+        capture_output=True,
+        timeout=30,
+    )
+    detail = probe.stdout.strip() if probe.returncode == 0 else probe.stderr.strip()
+    return _check("h3probe built-in provider", probe.returncode == 0, detail, required=required)
 
 
-def _drivers(config: Config, required: bool, memory: bool = False) -> list[dict[str, Any]]:
-    """h3probe as the providers need it: installed, the pinned image, loaded, and its device opening.
-
-    With `memory`, the device must also serve the versioned memory operation (`sklab.h3_memory`).
-    """
+def _drivers(
+    config: Config,
+    target: Target | None,
+    required: bool,
+    provider: bool = False,
+) -> list[dict[str, Any]]:
+    """Check service lifecycle here; delegate the device/ABI handshake to windbg-mcp."""
     drivers = config.drivers
     probe = driver_status(drivers.h3probe_service)
     if not probe.installed:
@@ -110,11 +160,8 @@ def _drivers(config: Config, required: bool, memory: bool = False) -> list[dict[
         )
     detail = probe.state if probe.running else f"{probe.state}; start it with: sklab driver start"
     rows.append(_check("h3probe running", probe.running, detail, required=required))
-    if probe.running:
-        opened, detail = open_device()
-        rows.append(_check("H3Probe device", opened, detail, required=required))
-        if opened:
-            rows.append(_memory_operation(required and memory))
+    if probe.running and provider:
+        rows.append(_provider(config, target, required))
     return rows
 
 
@@ -179,8 +226,8 @@ def run(
             required=needed("kit"),
         ),
     ]
-    memory = needed("h3_memory")
-    checks.extend(_drivers(config, needed("h3probe") or memory, memory))
+    provider = needed("h3probe") or needed("h3_memory")
+    checks.extend(_drivers(config, target, provider, provider))
     if target is not None:
         checks.extend(
             [
