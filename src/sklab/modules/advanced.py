@@ -184,6 +184,7 @@ def m8_acceptance(ctx: RunContext, options: dict[str, Any]) -> dict[str, Any]:
             "external-full contains the non-gating GUI race rig; set "
             "include_non_gating_gui_controls=true to request it explicitly"
         )
+    ctx.confirm(f"Run the exact M8 {scope} qualification against {target.vm_name}?")
     breakpoint = str(options.get("breakpoint", m8.DEFAULT_BREAKPOINT))
     if scope == "composite":
         config_path = m8.write_composite_config(

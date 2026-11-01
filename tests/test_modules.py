@@ -10,7 +10,7 @@ from unittest import mock
 from sklab.cli import parse_overrides, resolve_module
 from sklab.config import load
 from sklab import m8
-from sklab.modules import ALL_MODULES, core
+from sklab.modules import ALL_MODULES, advanced, core
 
 
 class ModuleTests(unittest.TestCase):
@@ -97,6 +97,7 @@ class ModuleTests(unittest.TestCase):
         context.target.vp = 0
         context.target.vm_id = "vm-id"
         context.target.name = "k3"
+        context.target.vm_name = "test-vm"
         context.target.secure_kernel_image = Path("securekernel.exe")
         context.config.source = Path("config.toml")
         context.config.paths.windbg_mcp_exe = Path("windbg-mcp.exe")
@@ -114,6 +115,50 @@ class ModuleTests(unittest.TestCase):
         self.assertIs(written["allow_transition_cr3"], True)
         self.assertEqual(written["expected_cr3"], "0x2601000")
         self.assertEqual(written["trigger"][-2:], ["--count", "1"])
+        context.confirm.assert_called_once_with(
+            "Run the live Secure Kernel acceptance tier against test-vm?"
+        )
+
+    def test_kd_debugger_check_honors_a_per_run_symbol_path(self) -> None:
+        context = mock.Mock()
+        context.config.paths.symbol_path = None
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            symbols = root / "symbols"
+            symbols.mkdir()
+            credential = root / "guest.json"
+            credential.touch()
+            context.target.guest_credential_file = credential
+            with mock.patch.object(core, "doctor", return_value=[]):
+                checks = core._kd_debugger_checks(context, {"symbol_path": str(symbols)})
+
+        symbol = next(row for row in checks if row["name"] == "Secure Kernel symbol store")
+        self.assertEqual(symbol["status"], "ok")
+        self.assertEqual(symbol["detail"], str(symbols))
+
+    def test_debugger_and_m8_confirm_before_they_create_target_control_inputs(self) -> None:
+        debugger = mock.Mock()
+        debugger.target.vm_name = "test-vm"
+        debugger.config.paths.symbol_path = Path("symbols")
+        debugger.confirm.side_effect = RuntimeError("declined")
+        with mock.patch.object(core, "_require_checks"):
+            with self.assertRaisesRegex(RuntimeError, "declined"):
+                core.kd_debugger(debugger, {})
+        debugger.confirm.assert_called_once()
+
+        acceptance = mock.Mock()
+        acceptance.target.vm_name = "test-vm"
+        acceptance.confirm.side_effect = RuntimeError("declined")
+        with (
+            mock.patch.object(advanced, "_m8_checks", return_value=[]),
+            mock.patch.object(advanced.m8, "write_composite_config") as write_config,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "declined"):
+                advanced.m8_acceptance(acceptance, {})
+        acceptance.confirm.assert_called_once_with(
+            "Run the exact M8 composite qualification against test-vm?"
+        )
+        write_config.assert_not_called()
 
     def test_m8_trigger_waits_for_a_debugger_owned_pause_to_end(self) -> None:
         target = mock.Mock()

@@ -62,9 +62,14 @@ def _kd_external_checks(ctx: RunContext, options: dict[str, Any]) -> list[dict[s
     return doctor(ctx.config, ctx.target, required=CONTROL_CAPABILITIES | {capability})
 
 
-def _kd_debugger_checks(ctx: RunContext, _options: dict[str, Any]) -> list[dict[str, Any]]:
+def _effective_symbol_path(ctx: RunContext, options: dict[str, Any]) -> Path | None:
+    value = options.get("symbol_path") or ctx.config.paths.symbol_path
+    return Path(str(value)) if value else None
+
+
+def _kd_debugger_checks(ctx: RunContext, options: dict[str, Any]) -> list[dict[str, Any]]:
     checks = doctor(ctx.config, ctx.target, required=CONTROL_CAPABILITIES)
-    symbol_path = ctx.config.paths.symbol_path
+    symbol_path = _effective_symbol_path(ctx, options)
     checks.append(
         {
             "name": "Secure Kernel symbol store",
@@ -226,6 +231,7 @@ def live_ambient(ctx: RunContext, options: dict[str, Any]) -> dict[str, Any]:
     ctx.require_disposable()
     target = ctx.target
     assert target is not None
+    ctx.confirm(f"Run the live Secure Kernel acceptance tier against {target.vm_name}?")
     pid, vnd, handle, partition, how = bench_bridge.discover(ctx)
     provider = [
         str(ctx.config.paths.windbg_mcp_exe),
@@ -619,7 +625,13 @@ def kd_debugger(ctx: RunContext, options: dict[str, Any]) -> dict[str, Any]:
     if not 1 <= cycles <= 25:
         raise PrerequisiteError("free_run_cycles must be in 1..=25")
     breakpoint = str(options.get("breakpoint", m8.DEFAULT_BREAKPOINT))
-    symbol_path = Path(str(options.get("symbol_path") or ctx.config.paths.symbol_path))
+    symbol_path = _effective_symbol_path(ctx, options)
+    if symbol_path is None:
+        raise PrerequisiteError("a Secure Kernel symbol path is required")
+    ctx.confirm(
+        f"Open the composite Secure Kernel debugger on {target.vm_name}, hit {breakpoint}, "
+        f"and run {cycles} break-in cycle(s)?"
+    )
     policy_path = ctx.run_dir / "sk-live-policy.json"
     write_policy(ctx.config, target, policy_path)
     client = McpClient(
