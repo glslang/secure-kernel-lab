@@ -27,6 +27,7 @@ def _parser() -> argparse.ArgumentParser:
     trigger.add_argument("--count", type=int, required=True)
     audit = actions.add_parser("audit")
     audit.add_argument("--survival-seconds", type=int, default=60)
+    audit.add_argument("--profile", type=Path)
     return parser
 
 
@@ -49,7 +50,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                     config,
                     ALL_MODULES["validate.kd-post-audit"],
                     target_name=target.name,
-                    overrides={"survival_seconds": args.survival_seconds},
+                    overrides={
+                        "survival_seconds": args.survival_seconds,
+                        "profile": str(args.profile) if args.profile is not None else None,
+                    },
                     output=Output(stream=sys.stderr, color=False),
                     assume_yes=True,
                 )

@@ -9,7 +9,7 @@ from unittest import mock
 
 from sklab.cli import parse_overrides, resolve_module
 from sklab.config import load
-from sklab import m8
+from sklab import m8, m8_helper
 from sklab.modules import ALL_MODULES, advanced, core
 
 
@@ -76,9 +76,59 @@ class ModuleTests(unittest.TestCase):
         self.assertEqual(value["control_transport"], "builtin:h3probe")
         self.assertEqual(value["live_transport"], "builtin:h3probe")
         self.assertEqual(value["trigger"][-2:], ["--count", "1"])
-        self.assertEqual(value["post_release_audit"][-2:], ["--survival-seconds", "60"])
+        audit = value["post_release_audit"]
+        self.assertEqual(audit[audit.index("--profile") + 1], str(root / "managed-kd-profile.json"))
+        self.assertEqual(audit[audit.index("--survival-seconds") + 1], "60")
         self.assertEqual(profile["secure_kernel_kd"]["initial"]["rva"], m8.NATURAL_STOP_RVA)
         self.assertEqual(profile["secure_kernel_kd"]["initial"]["original"], [72, 131, 236, 8])
+
+    def test_audit_helper_passes_the_effective_profile_to_the_module(self) -> None:
+        config = mock.Mock()
+        config.target.return_value.name = "k3"
+        outcome = mock.Mock(run_dir=Path("run"), result={})
+        with (
+            mock.patch.object(m8_helper, "load", return_value=config),
+            mock.patch.object(m8_helper, "execute_module", return_value=outcome) as execute,
+            mock.patch("builtins.print"),
+        ):
+            result = m8_helper.main(
+                [
+                    "--config",
+                    "config.toml",
+                    "--target",
+                    "k3",
+                    "audit",
+                    "--profile",
+                    "managed-kd-profile.json",
+                    "--survival-seconds",
+                    "60",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(
+            execute.call_args.kwargs["overrides"],
+            {"survival_seconds": 60, "profile": "managed-kd-profile.json"},
+        )
+
+    def test_kd_audit_uses_the_profile_supplied_by_the_callback(self) -> None:
+        context = mock.Mock()
+        context.target.vm_name = "test-vm"
+        with (
+            mock.patch.object(advanced, "_kd_post_audit_checks", return_value=[]),
+            mock.patch.object(core, "_post_kd_audit", return_value={"result": "pass"}) as audit,
+        ):
+            result = advanced.kd_post_audit(
+                context,
+                {"survival_seconds": 60, "profile": "managed-kd-profile.json"},
+            )
+
+        self.assertEqual(result, {"result": "pass"})
+        audit.assert_called_once_with(
+            context,
+            survival_seconds=60,
+            profile=Path("managed-kd-profile.json"),
+        )
 
     def test_live_ambient_arms_the_four_measured_interrupt_entries(self) -> None:
         armed = core._ambient_breakpoints(0x10000000)
