@@ -14,6 +14,8 @@ from .util import atomic_json
 
 M8_SCHEMA = "windbg-mcp.sk-kd-m8.2a-config/v1"
 DEFAULT_BREAKPOINT = "securekernel!IumInvokeSecureService"
+NATURAL_STOP_RVA = "0x00000000000e7670"
+NATURAL_STOP_BYTES = [0x48, 0x83, 0xEC, 0x08]
 
 
 def open_arguments(
@@ -199,6 +201,40 @@ def write_composite_config(
     return path
 
 
+def write_managed_kd_config(config: Config, target: Target, path: Path) -> Path:
+    symbols = config.paths.symbol_path
+    if symbols is None or not symbols.is_dir():
+        raise PrerequisiteError(
+            "managed KD acceptance requires paths.symbol_path naming the local symbol store"
+        )
+    kd = config.paths.cdb_exe.with_name("kd.exe")
+    if not kd.is_file():
+        raise PrerequisiteError(f"managed KD acceptance requires kd.exe beside paths.cdb_exe: {kd}")
+    try:
+        profile = json.loads(target.profile.read_text(encoding="utf-8"))
+        profile["secure_kernel_kd"]["initial"] = {
+            "rva": NATURAL_STOP_RVA,
+            "original": NATURAL_STOP_BYTES,
+        }
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise PrerequisiteError(f"cannot prepare the managed KD profile {target.profile}: {error}") from error
+    natural_profile = path.with_name("managed-kd-profile.json")
+    atomic_json(natural_profile, profile)
+    value = {
+        **open_arguments(config, target, arm_mode="natural"),
+        "profile": str(natural_profile),
+        "kd": str(kd),
+        "disposable": True,
+        "symbol_path": str(symbols),
+        "trigger": helper_command(config, target, "trigger", "--count", "1"),
+        "post_release_audit": helper_command(
+            config, target, "audit", "--survival-seconds", "60"
+        ),
+    }
+    atomic_json(path, value)
+    return path
+
+
 def boot_identity(target: Target) -> dict[str, Any]:
     escaped = target.vm_id.replace("'", "''")
     command = (
@@ -246,9 +282,20 @@ def trigger_enclave(target: Target, count: int) -> dict[str, Any]:
     host = target.guest_spin_host.replace("'", "''")
     image = target.guest_enclave_image.replace("'", "''")
     command = (
+        "$deadline=[DateTime]::UtcNow.AddSeconds(30);$runningSince=$null;"
+        "do{"
         f"$v=Get-VM -Id '{vm_id}' -ErrorAction Stop;"
-        f"if($v.Name -ne '{vm_name}' -or $v.State.ToString() -ne 'Running')"
-        "{throw 'the allowlisted target is not running'};"
+        f"if($v.Name -ne '{vm_name}'){{throw 'the allowlisted target identity changed'}};"
+        "$state=$v.State.ToString();"
+        "if($state -eq 'Running'){"
+        "if($null -eq $runningSince){$runningSince=[DateTime]::UtcNow};"
+        "if(([DateTime]::UtcNow-$runningSince).TotalMilliseconds -ge 500){break}"
+        "}elseif($state -eq 'Paused'){$runningSince=$null}"
+        "else{throw \"the allowlisted target is not running: $state\"};"
+        "Start-Sleep -Milliseconds 100"
+        "}while([DateTime]::UtcNow -lt $deadline);"
+        "if($v.State.ToString() -ne 'Running' -or $null -eq $runningSince)"
+        "{throw 'the allowlisted target did not resume within 30 seconds'};"
         f"$g=Get-Content -LiteralPath '{credential_path}' -Raw|ConvertFrom-Json;"
         "$c=New-Object System.Management.Automation.PSCredential([string]$g.username,"
         "(ConvertTo-SecureString ([string]$g.password) -AsPlainText -Force));"

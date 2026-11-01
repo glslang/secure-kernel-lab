@@ -17,6 +17,11 @@ hvmm service uninstalled: `Get-Service hvmm` answered "Cannot find any service w
 'hvmm'", and no process had `hvlib.dll` loaded. [Results](#results-2026-10-29) records each run,
 the attempts that failed and why, and the three sklab defects the final acceptance found and fixed.
 
+**Ownership update, 2026-11-01:** windbg-mcp item 133 subsequently moved `h3probe`'s source and both
+providers into windbg-mcp. The 2026-10-29 results below remain the migration's historical evidence;
+the current sklab tree is an ordinary client that keeps only service lifecycle, guest triggers and
+evidence orchestration, and pins the driver built in `C:\workspace\windbg-mcp\drivers\h3probe`.
+
 ## Why this is not an IOCTL rename
 
 H3probe already exposes `IOCTL_H3_READGPA` and `IOCTL_H3_WRITEGPA`, but those exercise the root

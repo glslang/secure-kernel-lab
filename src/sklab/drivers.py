@@ -1,9 +1,7 @@
-"""Host kernel drivers the live providers stand on.
+"""Service lifecycle for the operator-built h3probe driver.
 
-`h3probe` is the one driver: the root-partition probe built for gate H3, whose device
-`\\\\.\\H3Probe` serves every register read and write, every guest-physical page through its
-exact-build VID memory operation, and the hypercall-mode GPA read in `src/sklab/bench/`. It is
-installed as a demand-start service and left stopped between runs.
+The driver source and every device operation live in windbg-mcp. Sklab only starts, stops and
+audits the service selected by its local configuration.
 """
 
 from __future__ import annotations
@@ -20,8 +18,6 @@ try:
 except ImportError:  # pragma: no cover - the lab is Windows-only; keep imports testable elsewhere
     winreg = None  # type: ignore[assignment]
 
-
-H3PROBE_DEVICE = r"\\.\H3Probe"
 
 _STATES = {
     1: "stopped",
@@ -186,21 +182,3 @@ def start(service: str, timeout: float = 15) -> DriverStatus:
 
 def stop(service: str, timeout: float = 15) -> DriverStatus:
     return _transition(service, start=False, timeout=timeout)
-
-
-def open_device(path: str = H3PROBE_DEVICE) -> tuple[bool, str]:
-    """Open and close the device the providers open, without sending it anything."""
-    try:
-        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    except (AttributeError, OSError) as error:
-        return False, str(error)
-    kernel32.CreateFileW.restype = ctypes.c_void_p
-    kernel32.CreateFileW.argtypes = [
-        wt.LPCWSTR, wt.DWORD, wt.DWORD, ctypes.c_void_p, wt.DWORD, wt.DWORD, ctypes.c_void_p,
-    ]
-    kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
-    handle = kernel32.CreateFileW(path, 0xC0000000, 0, None, 3, 0, None)
-    if not handle or handle == ctypes.c_void_p(-1).value:
-        return False, f"cannot open {path}: Win32 {ctypes.get_last_error()}"
-    kernel32.CloseHandle(handle)
-    return True, f"{path} opens"
