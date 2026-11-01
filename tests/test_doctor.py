@@ -45,6 +45,33 @@ class DoctorTests(unittest.TestCase):
         self.assertIn("builtin:h3probe", second)
         self.assertNotIn("--expected-cr3", second)
 
+    def test_provider_process_failures_are_reported_as_checks(self) -> None:
+        discovery = subprocess.CompletedProcess(
+            [], 0, json.dumps({"partition_id": "0x85"}), ""
+        )
+        cases = (
+            ("discovery", FileNotFoundError("missing windbg-mcp"), "identity discovery failed"),
+            (
+                "discovery",
+                subprocess.TimeoutExpired("windbg-mcp", 120),
+                "identity discovery failed",
+            ),
+            ("probe", FileNotFoundError("missing repository"), "control-provider probe failed"),
+            (
+                "probe",
+                subprocess.TimeoutExpired("windbg-mcp", 30),
+                "control-provider probe failed",
+            ),
+        )
+        for stage, error, detail in cases:
+            with self.subTest(stage=stage, error=type(error).__name__):
+                side_effect = [error] if stage == "discovery" else [discovery, error]
+                with mock.patch.object(doctor.subprocess, "run", side_effect=side_effect):
+                    row = doctor._provider(self.config, self.target, True)
+                self.assertEqual(row["status"], "error")
+                self.assertTrue(row["required"])
+                self.assertIn(detail, row["detail"])
+
 
 if __name__ == "__main__":
     unittest.main()

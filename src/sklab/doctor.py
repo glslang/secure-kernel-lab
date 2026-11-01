@@ -64,20 +64,28 @@ def _provider(config: Config, target: Target | None, required: bool) -> dict[str
             "a configured target is required for the provider handshake",
             required=required,
         )
-    discovery = subprocess.run(
-        [
-            str(config.paths.windbg_mcp_exe),
-            "--sk-discover-identity",
-            "--profile",
-            str(target.profile),
-            "--vm-id",
-            target.vm_id,
-        ],
-        cwd=config.paths.windbg_mcp_repo,
-        text=True,
-        capture_output=True,
-        timeout=120,
-    )
+    try:
+        discovery = subprocess.run(
+            [
+                str(config.paths.windbg_mcp_exe),
+                "--sk-discover-identity",
+                "--profile",
+                str(target.profile),
+                "--vm-id",
+                target.vm_id,
+            ],
+            cwd=config.paths.windbg_mcp_repo,
+            text=True,
+            capture_output=True,
+            timeout=120,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return _check(
+            "h3probe built-in provider",
+            False,
+            f"identity discovery failed: {error}",
+            required=required,
+        )
     if discovery.returncode:
         return _check(
             "h3probe built-in provider",
@@ -95,24 +103,32 @@ def _provider(config: Config, target: Target | None, required: bool) -> dict[str
             f"invalid discovery reply: {error}: {discovery.stdout!r}",
             required=required,
         )
-    probe = subprocess.run(
-        [
-            str(config.paths.windbg_mcp_exe),
-            "--sk-control-probe",
-            "--transport",
-            "builtin:h3probe",
-            "--vm-id",
-            target.vm_id,
-            "--partition-id",
-            partition,
-            "--vp",
-            str(target.vp),
-        ],
-        cwd=config.paths.windbg_mcp_repo,
-        text=True,
-        capture_output=True,
-        timeout=30,
-    )
+    try:
+        probe = subprocess.run(
+            [
+                str(config.paths.windbg_mcp_exe),
+                "--sk-control-probe",
+                "--transport",
+                "builtin:h3probe",
+                "--vm-id",
+                target.vm_id,
+                "--partition-id",
+                partition,
+                "--vp",
+                str(target.vp),
+            ],
+            cwd=config.paths.windbg_mcp_repo,
+            text=True,
+            capture_output=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return _check(
+            "h3probe built-in provider",
+            False,
+            f"control-provider probe failed: {error}",
+            required=required,
+        )
     detail = probe.stdout.strip() if probe.returncode == 0 else probe.stderr.strip()
     return _check("h3probe built-in provider", probe.returncode == 0, detail, required=required)
 
