@@ -380,7 +380,12 @@ def _set_paused(vm_id: str, paused: bool) -> None:
     _powershell(script)
 
 
-def _post_kd_audit(ctx: RunContext, *, survival_seconds: int = 0) -> dict[str, Any]:
+def _post_kd_audit(
+    ctx: RunContext,
+    *,
+    survival_seconds: int = 0,
+    profile: Path | None = None,
+) -> dict[str, Any]:
     """Keep orchestration in sklab and perform every privileged read in windbg-mcp."""
     if module_loaded("hvlib.dll"):
         raise RecoveryRequired("KD released but hvlib.dll was already loaded before its audit")
@@ -411,8 +416,9 @@ def _post_kd_audit(ctx: RunContext, *, survival_seconds: int = 0) -> dict[str, A
             raise RecoveryRequired(f"target health changed during post-release audit: {boot}")
         survival.append({"label": f"post-kd-release-{checkpoint}s", **boot})
 
-    profile = json.loads(target.profile.read_text(encoding="utf-8"))
-    initial = profile["secure_kernel_kd"]["initial"]
+    profile_path = profile or target.profile
+    profile_value = json.loads(profile_path.read_text(encoding="utf-8"))
+    initial = profile_value["secure_kernel_kd"]["initial"]
     expected = bytes(int(value) for value in initial["original"])
     command = [
         str(ctx.config.paths.windbg_mcp_exe),

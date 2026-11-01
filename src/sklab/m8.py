@@ -228,7 +228,13 @@ def write_managed_kd_config(config: Config, target: Target, path: Path) -> Path:
         "symbol_path": str(symbols),
         "trigger": helper_command(config, target, "trigger", "--count", "1"),
         "post_release_audit": helper_command(
-            config, target, "audit", "--survival-seconds", "60"
+            config,
+            target,
+            "audit",
+            "--profile",
+            str(natural_profile),
+            "--survival-seconds",
+            "60",
         ),
     }
     atomic_json(path, value)

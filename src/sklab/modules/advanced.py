@@ -43,7 +43,12 @@ def kd_post_audit(ctx: RunContext, options: dict[str, Any]) -> dict[str, Any]:
     ctx.confirm(f"Pause {target.vm_name} and run the KD post-release restoration audit?")
     from .core import _post_kd_audit
 
-    return _post_kd_audit(ctx, survival_seconds=int(options.get("survival_seconds", 0)))
+    configured_profile = options.get("profile")
+    return _post_kd_audit(
+        ctx,
+        survival_seconds=int(options.get("survival_seconds", 0)),
+        profile=Path(str(configured_profile)) if configured_profile else None,
+    )
 
 
 def _cargo_acceptance(ctx: RunContext, options: dict[str, Any], *, kd: bool) -> dict[str, Any]:
@@ -236,7 +241,7 @@ ADVANCED_MODULES = [
         "advanced",
         "target-control",
         "Run windbg-mcp's identity, guarded-text, debug-register, flags and health audit.",
-        {"survival_seconds": 0},
+        {"survival_seconds": 0, "profile": None},
         _kd_post_audit_checks,
         kd_post_audit,
     ),
