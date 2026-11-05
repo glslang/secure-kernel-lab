@@ -1,0 +1,130 @@
+{
+  "artifact_dir": "${SKLAB_ROOT}\\generated\\m8-external\\artifacts",
+  "boot_probe": [
+    "${PYTHON}",
+    "-m",
+    "sklab.m8_helper",
+    "--config",
+    "${SKLAB_ROOT}\\config.local.toml",
+    "--target",
+    "example",
+    "boot"
+  ],
+  "breakpoint": "securekernel!IumInvokeSecureService",
+  "disposable": true,
+  "frontends": {
+    "classic": "${SKLAB_ROOT}\\tools\\windbg.exe",
+    "windbgx": "${SKLAB_ROOT}\\tools\\DbgX.Shell.exe"
+  },
+  "interrupts": {
+    "classic": [
+      "powershell.exe",
+      "-NoProfile",
+      "-NonInteractive",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      "${SKLAB_REPO}\\scripts\\m8_debugger_control.ps1",
+      "-Action",
+      "Break",
+      "-DebuggerPid",
+      "{pid}"
+    ],
+    "windbgx": [
+      "powershell.exe",
+      "-NoProfile",
+      "-NonInteractive",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      "${SKLAB_REPO}\\scripts\\m8_debugger_control.ps1",
+      "-Action",
+      "Break",
+      "-DebuggerPid",
+      "{pid}"
+    ]
+  },
+  "open": {
+    "arm_mode": "redirect",
+    "connect_timeout_ms": 60000,
+    "control_transport": "builtin:h3probe",
+    "idle_timeout_ms": 60000,
+    "live_transport": "builtin:h3probe",
+    "profile": "${SKLAB_ROOT}\\profiles\\vmwp-dispatcher-profile.json",
+    "vm_id": "00000000-0000-0000-0000-000000000000",
+    "vp": 0
+  },
+  "policies": {
+    "hardware": "${SKLAB_ROOT}\\generated\\m8-external\\m8-policy-hardware.json",
+    "int3": "${SKLAB_ROOT}\\generated\\m8-external\\m8-policy-int3.json"
+  },
+  "post_release_audit": [
+    "${PYTHON}",
+    "-m",
+    "sklab.m8_helper",
+    "--config",
+    "${SKLAB_ROOT}\\config.local.toml",
+    "--target",
+    "example",
+    "audit",
+    "--survival-seconds",
+    "60"
+  ],
+  "resets": {
+    "classic": [
+      "powershell.exe",
+      "-NoProfile",
+      "-NonInteractive",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      "${SKLAB_REPO}\\scripts\\m8_debugger_control.ps1",
+      "-Action",
+      "Reset",
+      "-DebuggerPid",
+      "{pid}"
+    ],
+    "windbgx": [
+      "powershell.exe",
+      "-NoProfile",
+      "-NonInteractive",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      "${SKLAB_REPO}\\scripts\\m8_debugger_control.ps1",
+      "-Action",
+      "Reset",
+      "-DebuggerPid",
+      "{pid}"
+    ]
+  },
+  "schema": "windbg-mcp.sk-kd-m8.2a-config/v1",
+  "symbol_path": "${SKLAB_ROOT}\\symbols",
+  "trigger": [
+    "${PYTHON}",
+    "-m",
+    "sklab.m8_helper",
+    "--config",
+    "${SKLAB_ROOT}\\config.local.toml",
+    "--target",
+    "example",
+    "trigger",
+    "--count",
+    "{count}"
+  ],
+  "windbgx_script": [
+    "powershell.exe",
+    "-NoProfile",
+    "-NonInteractive",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "${SKLAB_REPO}\\scripts\\m8_debugger_control.ps1",
+    "-Action",
+    "Command",
+    "-DebuggerPid",
+    "{pid}",
+    "-Text",
+    "{command}"
+  ]
+}
