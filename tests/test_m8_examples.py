@@ -33,6 +33,19 @@ class M8ExampleTests(unittest.TestCase):
         self.assertIn("${SKLAB_REPO}", combined)
         self.assertIn("${PYTHON}", combined)
         self.assertIn("00000000-0000-0000-0000-000000000000", combined)
+        placeholder_lines = [
+            line
+            for line in combined.splitlines()
+            if any(
+                placeholder in line
+                for placeholder in ("${PYTHON}", "${SKLAB_ROOT}", "${SKLAB_REPO}")
+            )
+        ]
+        self.assertTrue(placeholder_lines)
+        self.assertFalse(
+            any("\\" in line for line in placeholder_lines),
+            "generated placeholder paths use host-independent forward slashes",
+        )
         self.assertNotIn(str(repository), combined)
         self.assertNotIn("password", combined.lower())
 

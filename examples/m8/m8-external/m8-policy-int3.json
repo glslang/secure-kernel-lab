@@ -7,10 +7,10 @@
     "00000000-0000-0000-0000-000000000000"
   ],
   "kit_roots": [
-    "${SKLAB_ROOT}\\Windows Kits\\10"
+    "${SKLAB_ROOT}/Windows Kits/10"
   ],
   "max_pause_ms": 600000,
   "profile_roots": [
-    "${SKLAB_ROOT}\\profiles"
+    "${SKLAB_ROOT}/profiles"
   ]
 }
