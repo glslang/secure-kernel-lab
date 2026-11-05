@@ -82,6 +82,11 @@ def _portable(value: Any, *, generated_root: Path) -> Any:
         )
         for before, after in replacements:
             value = value.replace(before, after)
+        if any(
+            placeholder in value
+            for placeholder in ("${PYTHON}", "${SKLAB_ROOT}", "${SKLAB_REPO}")
+        ):
+            value = value.replace("\\", "/")
         return value
     if isinstance(value, dict):
         return {
