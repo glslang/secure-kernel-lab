@@ -87,6 +87,11 @@ Generated policies admit `builtin:h3probe` in `builtin_transports` and contain n
 interpreter command. Custom transports remain a windbg-mcp feature, but sklab's supported path uses
 the image currently running the MCP worker so provider and server builds cannot drift.
 
+Sanitized generated M8 policy and configuration shapes are committed under
+[`examples/m8/`](examples/m8/). Regenerate them with
+`uv run python scripts/generate_m8_examples.py`; a unit test rejects drift from the production
+writers. The committed examples contain placeholders rather than live authority.
+
 ## Exact vmwp profiles
 
 Profiles under `profiles/` are source-controlled exact-build inputs. Derive a write-once candidate

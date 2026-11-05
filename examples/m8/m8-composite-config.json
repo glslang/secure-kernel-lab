@@ -1,0 +1,37 @@
+{
+  "arm_mode": "redirect",
+  "breakpoint": "securekernel!IumInvokeSecureService",
+  "connect_timeout_ms": 120000,
+  "control_transport": "builtin:h3probe",
+  "disposable": true,
+  "idle_timeout_ms": 300000,
+  "live_transport": "builtin:h3probe",
+  "post_release_audit": [
+    "${PYTHON}",
+    "-m",
+    "sklab.m8_helper",
+    "--config",
+    "${SKLAB_ROOT}\\config.local.toml",
+    "--target",
+    "example",
+    "audit",
+    "--survival-seconds",
+    "60"
+  ],
+  "profile": "${SKLAB_ROOT}\\profiles\\vmwp-dispatcher-profile.json",
+  "symbol_path": "${SKLAB_ROOT}\\symbols",
+  "trigger": [
+    "${PYTHON}",
+    "-m",
+    "sklab.m8_helper",
+    "--config",
+    "${SKLAB_ROOT}\\config.local.toml",
+    "--target",
+    "example",
+    "trigger",
+    "--count",
+    "1"
+  ],
+  "vm_id": "00000000-0000-0000-0000-000000000000",
+  "vp": 0
+}
